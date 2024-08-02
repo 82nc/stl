@@ -101,11 +101,11 @@ struct __rb_tree_base_iterator {
     void decrement()
     {
         if (node->color == __rb_tree_red && //如果是红节点,且父节点的父节点等于自己
-            node->parent->parent == node)   //父节点的父节点等于自己
+            node->parent->parent == node) { //父节点的父节点等于自己
             node = node->right;             //状况(1)右子节点即为解答
         //以上情况发生于node为header时(亦即node为end时)
         //注意,header之右子节点即mostright, 指向整棵树的max节点
-        else if (node->left != 0) {     //如果有左子节点(状况2)
+        } else if (node->left != 0) {   //如果有左子节点(状况2)
             base_ptr y = node->left;    //令y指向左子节点
             while (y->right != 0)       //当y有右子节点时
                 y = y->right;           //一直往右子节点走到底
