@@ -1,8 +1,8 @@
 #ifndef SGI_STL_DEQUE_H
 #define SGI_STL_DEQUE_H
 
-#include "03-iterator/stl_iterator.h"
 #include "02-allocator/stl_alloc.h"
+#include "03-iterator/stl_iterator.h"
 
 
 //每个节点缓存区的元素个数
