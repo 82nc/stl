@@ -503,7 +503,9 @@ rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const Key &k)
 #endif // SGI_STL_RB_TREE_H
 
 
-/* demo for stl-tree
+/*
+ * ========= TEST DEMO ============
+ *
 rb_tree<int, int, identity<int>, less<int>> itree;
 itree.insert_unique(10); //__rb_tree_rebalance
 itree.insert_unique(7); //__rb_tree_rebalance

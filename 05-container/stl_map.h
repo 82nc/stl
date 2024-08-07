@@ -152,7 +152,7 @@ inline bool operator< (const map<Key, Compare, Alloc>& x, const map<Key, Compare
 #endif // SGI_STL_MAP_H
 
 /*
- * test demo
+ * ========= TEST DEMO ============
 
 #include <map>
 #include <iostream>
