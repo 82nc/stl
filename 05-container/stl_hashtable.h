@@ -149,6 +149,8 @@ public:
         return result;
     }
 
+    hasher funct() const { return hash; }
+    key_equal key_eq() const { return equals; }
 private:
     node* new_node(const value_type& obj)
     {

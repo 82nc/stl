@@ -41,8 +41,7 @@ public:
 private:
     //以下定义表述差别(representation type), 以map元素型别(一个pair)
     //的第一型别,作为RB-tree节点的键值类型
-    typedef rb_tree<key_type, value_type, 
-    select1st<value_type>, key_compare, Alloc> rep_type;
+    typedef rb_tree<key_type, value_type, select1st<value_type>, key_compare, Alloc> rep_type;
     rep_type t; //以红黑树表现map
 public:
     typedef typename rep_type::pointer pointer;
