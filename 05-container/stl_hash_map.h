@@ -70,6 +70,93 @@ public:
     void swap(hash_map& hs) { rep.swap(hs.rep); }
     friend bool operator == __STL_NULL_TMPL_ARGS (const hash_map&, const hash_map&);
 
+    iterator begin() { return rep.begin(); }
+    iterator end() { return rep.end(); }
+    const_iterator begin() const { return rep.begin(); }
+    const_iterator end() const { return rep.end(); }
+public:
+    pair<iterator, bool> insert(cosnt value_type& obj) { return rep.insert_unique(obj); }
+
+    template <class InputIterator>
+    void insert(InputIterator f, InputIterator l) { rep.insert_unique(f, l); }
+
+    pair<iterator, bool> insert_noresize(const value_type& obj) { 
+        return rep.insert_unique_noresize(obj); 
+    }
+
+    iterator find(const key_type& key) { return rep.find(key); }
+    const_iterator find(const key_type& key) const { return rep.find(key); }
+
+    T& operator[](const key_type& key) {
+        return rep.find_or_insert(value_type(key, T())).second;
+    }
+
+    size_type count(const key_type& key) const { return rep.count(key); }
+    pair<iterator, iterator> equal_range(const key_type& key) { return rep.equal_range(key); }
+    pair<const iterator, const_iterator> equal_range(const key_type& key) { return rep.equal_range(key); }
+
+    size_type erase(const key_type& key) { return rep.erase(key); }
+    void erase(iterator i) { return rep.erase(i); }
+    void erase(iterator f, iterator l) { rep.erase(f, l); }
+    void clear() { rep.clear(); }
+public:
+    void resize(size_type hint) { rep.resize(hint); }
+    size_type bucket_count() const { return rep.bucket_count(); }
+    size_type max_bucket_count() const { return rep.max_bucket_count(); }
+    size_type elems_in_bucket(size_type n) const { return rep.elems_in_bucket(n); }
 };
 
+template <class Key, class T, class HashFcn, class EqualKey, class Alloc>
+inline bool operator ==(const hash_map<Key, T, HashFcn, EqualKey, Alloc>& hm1,
+                        const hash_map<Key, T, HashFcn, EqualKey, Alloc>& hm2)
+{
+    return hm1.rep == hm2.rep;
+}
+
 #endif // SGI_STL_HASH_MAP_H
+
+
+/*
+ * ======== TEST DEMO =========
+ 
+#include <iostream>
+#include <hash_map>
+#include <cstring>
+
+using namespace std;
+
+struct {
+    bool operator(const char* s1, const char* s2) const { return strcmp(s1, s2); }
+};
+
+int main()
+{
+    hash_map<const char*, int, hash<const char*>, eqstr> days;
+
+    days["january"] = 31;
+    days["february"] = 28;
+    days["march"] = 31;
+    days["april"] = 30;
+    days["may"] = 31;
+    days["june"] = 30;
+    days["july"] = 31;
+    days["august"] = 31;
+    days["september"] = 30;
+    days["october"] = 31;
+    days["november"] = 30;
+    days["december"] = 31;
+
+    cout << "september -> " << days["september"] << endl; // 30
+    cout << "june      -> " << days["june"] << endl;      // 30
+    cout << "february -> " << days["february"] << endl;   // 28
+    cout << "december -> " << days["december"] << endl;   // 31
+
+    hash_map<const char*, int, hash<const char*>, eqstr>::iterator c = days.begin();
+    hash_map<const char*, int, hash<const char*>, eqstr>::iterator e = days.end();
+
+    for (; c != e; ++c)
+        cout << c->first << ' '
+    // september june july may january february december march april november october august
+}
+
+ */
