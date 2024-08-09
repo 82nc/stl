@@ -27,10 +27,10 @@ public:
     typedef typename ht::size_type size_type;
     typedef typename ht::difference_type difference_type;
     typedef typename ht::const_pointer pointer;
+    typedef typename ht::const_pointer const_pointer;
     typedef typename ht::const_reference reference;
-    typedef typename ht::const_reference const_reference;
-
     typedef typename ht::const_iterator iterator;
+    typedef typename ht::const_reference const_reference;
     typedef typename ht::const_iterator const_iterator;
 
     hasher hash_funct() const { return rep.hash_funct(); }
@@ -58,7 +58,7 @@ public:
     template <class InuputIterator>
     hash_set(InuputIterator f, InuputIterator l, size_type n,
              const hasher& hf, const key_equal& eql) :
-        rep(n, hf, eql) { rep.insert_equal(f, l); }
+        rep(n, hf, eql) { rep.insert_unique(f, l); }
 public:
     //所有操作几乎都有hash table对应版本,传递调用就行
     size_type size() const { return rep.size(); }

@@ -1,0 +1,47 @@
+
+/*
+
+STL 算法总览
+
+//不在STL标准算法之列的SGI专属算法均以*标记
+//"质变"栏意指mutating,意思是会改变其操作对象之内容
+------------------------------------------------------------------------
+算法名称                算法用途                    质变            所在文件
+------------------------------------------------------------------------
+accumulate             元素累计
+adjacent_difference    相邻元素的差额
+adjacent_find          查找相邻而重复/
+                       符合某种条件的元素
+binary_search          二分查找
+Copy                   复制
+Copy_backward          逆向复制
+Copy_n *               复制n个元素
+count                  计数
+count_if               在特定条件下计数
+equal                  判断区间相等
+equal_if               有序区间内寻找制定值的范围
+fill                   改填元素值
+fill_n                 改填元素值,n次
+find                   循环查找
+find_if                循环查找符合特定条件者
+find_end               查找某个子序列的最后出现点
+find_first_of          查找某个子序列的首次出现点
+for_each               对区间内每个元素施行某操作
+generate               以特定操作之运算结果填充
+                       特定区间的元素
+generate_n             以特定操作之运算结果填充
+                       n个元素内容
+includes               是否涵盖于某序列之中
+inner_product          内积
+inplace_merge          合并并就地替换
+Iota *                 在某个区间填入某指定值的
+                       递增序列
+is_heap *              判断某个区间是否为一个heap
+is_sorted *            判断某个区间是否已排序
+iter_swap              元素互换
+
+
+
+
+
+ */

@@ -27,13 +27,18 @@ public:
     typedef T data_type;
     typedef T mapped_type;
     typedef typename ht::value_type value_type;
+    typedef typename ht::hasher_type hasher;
+    typedef typename ht::key_equal key_equal;
+
+    typedef typename ht::size_type size_type;
     typedef typename ht::difference_type difference_type;
+
     typedef typename ht::pointer pointer;
-    typedef typename ht::const_pointer const_pointer;
-    typedef typename ht::reference reference;
-    typedef typename ht::const_reference const_reference;
     typedef typename ht::iterator iterator;
+    typedef typename ht::reference reference;
+    typedef typename ht::const_pointer const_pointer;
     typedef typename ht::const_iterator const_iterator;
+    typedef typename ht::const_reference const_reference;
 
     hasher hash_funct() const { return rep.hash_funct(); }
     key_equal key_eq() const { return rep.key_eq(); }
