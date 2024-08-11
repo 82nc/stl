@@ -73,7 +73,7 @@ value_type(const Iterator&) {
     return static_cast<typename iterator_traits<Iterator>::value_type*>(0);
 }
 
-// 以下是整租distance函数
+// 以下是整组的distance函数
 template <class InputIterator>
 inline typename iterator_traits<InputIterator>::difference_type
 __distance(InputIterator first, InputIterator last, input_iterator_tag) {
