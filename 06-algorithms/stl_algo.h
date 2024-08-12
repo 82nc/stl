@@ -1,6 +1,8 @@
 #ifndef SGI_STL_ALGO_H
 #define SGI_STL_ALGO_H
 
+#include "03-iterator/stl_iterator.h"
+
 
 /* ===========================================================
  * set union/intersection/difference/symmetric-difference
@@ -366,9 +368,155 @@ int main()
 
 //adjacent_find
 //找出第一组满足条件的相邻元素
-//version 1
+//version 1: 查找相邻的重复元素
+template <class ForwardIterator>
+ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last)
+{
+    if (first == last) return last;
+    ForwardIterator next = first;
+    while (++next != last) {
+        if (*first == *next) 
+            return first; //如果找到就结束
+        first = next;
+    }
+    return last;
+}
+
+//version 2: 查找相邻的重复元素
+template <class ForwardIterator, class BinaryPredicate>
+ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last, 
+BinaryPredicate binary_pred)
+{
+    if (first == last) return last;
+    ForwardIterator next = first;
+    while (++next != last) {
+        if (binary_pred(*first, *next)) 
+            return first; //如果找到就结束
+        first = next;
+    }
+    return last;
+}
+
+//count
+//返回区间内等于value的元素个数
+template <class InputIterator, class T>
+typename iterator_traits<InputIterator>::difference_type
+count(InputIterator first, InputIterator last, const T& value)
+{
+    //以下声明一个计数器n
+    typename iterator_traits<InputIterator>::diference_type n = 0;
+    for (; first != last; ++first)
+        if (*first == value)
+            ++n;
+    return n;
+}
+
+//count()有一个早期版本
+template <class InputIterator, class T, class Size>
+void count(InputIterator first, InputIterator last, const T& value, Size& n)
+{
+    for (; first != last; ++first)
+        if (*first == value)
+            ++n;
+}
+
+//count_if
+//返回区间内pred执行为true的元素个数
+template <class InputIterator, class Predicate>
+typename iterator_traits<InputIterator>::difference_type
+count_if(InputIterator first, InputIterator last, Predicate pred)
+{
+    typename iterator_traits<InputIterator>::difference_type n = 0;
+    for (; first != last; ++first)
+        if (pred(*first))
+            ++n;
+    return n;
+}
+
+//count_if()有一个早期版本
+template <class InputIterator, class Predicate, class Size>
+void count_if(InputIterator first, InputIterator last, Predicate pred, Size& n)
+{
+    for (; first != last; ++first)
+        if (pred(*first))
+            ++n;
+}
+
+//find
+//找出第一个匹配value的元素
+template <class InputIterator, class T>
+InputIterator find(InputIterator first, InputIterator last, const T& value)
+{
+    while (first != last && *first != value)
+        ++first;
+    return first;
+}
+
+//find_if
+//找出第一个pred执行为true的元素
+template <class InputIterator, class T>
+InputIterator find_if(InputIterator first, InputIterator last, const T& value)
+{
+    while (first != last && *first != value)
+        ++first;
+    return first;
+}
+
+//find_end
+//在序列一中,查找序列二的最后一次出现点
+template <class ForwardIterator1, class ForwardIterator2>
+inline ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1,
+ForwardIterator2 first2, ForwardIterator2 last2)
+{
+    typedef typename iterator_traits<ForwardIterator1>::iterator_category category1;
+    typedef typename iterator_traits<ForwardIterator2>::iterator_category category2;
+
+    return __find_end(first1, last1, first2, last2, category1(), category2());
+}
+
+template <class ForwardIterator1, class ForwardIterator2>
+inline ForwardIterator1 __find_end(ForwardIterator1 first1, ForwardIterator1 last1,
+ForwardIterator2 first2, ForwardIterator2 last2, forward_iterator_tag, forward_iterator_tag)
+{
+    if (first2 == last2)
+        return last1;
+    else {
+        ForwardIterator1 result = last1;
+        while (1) {
+            ForwardIterator1 new_result = search(first1, last1, first2, last2);
+            if (new_result == last1)
+                return result;
+            else {
+                result = new_result;
+                first1 = new_result;
+                ++first1;
+            }
+        }
+    }
+}
+
+template <class BidirectionalIterator1, class BidirectionalIterator2>
+inline BidirectionalIterator1 __find_end(BidirectionalIterator1 first1, BidirectionalIterator1 last1,
+BidirectionalIterator2 first2, BidirectionalIterator2 last2, bidirectional_iterator_tag, bidirectional_iterator_tag)
+{
+    typedef reverse_iterator<BidirectionalIterator1> reviter1;
+    typedef reverse_iterator<BidirectionalIterator2> reviter2;
+
+    reviter1 rlast1(first1);
+    reviter2 rlast2(first2);
+
+    reviter1 rresult = search(reviter1(last1), rlast1, reviter2(last2), rlast2);
+
+    if (rresult == rlast1)
+        return last1;
+    else {
+        BidirectionalIterator1 result = rresult.base(); //转回正常(非逆序)迭代器
+        advance(result, -distance(first2, last2)); //调整回到子序列的起头处
+        return result;
+    }
 
 
+}
 
 
 #endif // SGI_STL_ALGO_H
