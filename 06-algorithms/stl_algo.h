@@ -324,16 +324,49 @@ int main()
     vector<int> iv5(ia, ia+sizeof(ia)/sizeof(int));
     vector<int> iv6(ia+4, ia+8);
     vector<int> iv7(15);
+    for_each(iv5.begin(), iv5.end(), display<int>()); 
+    cout << endl; // iv5: 0 1 2 3 4 5 6 6 6 7 8
+    for_each(iv6.begin(), iv6.end(), display<int>()); 
+    cout << endl; // iv6: 4 5 6 6
 
+    cout << *max_element(iv5.begin(), iv5.end()) << endl; // 8
+    cout << *min_element(iv5.begin(), iv5.end()) << endl; // 0
 
+    //判断是否iv6内所有元素都出现iv5中
+    //注意两个序列都是sorted ranges
+    cout << include(iv5.begin(), iv5,end(), iv6.begin(), iv6.end()) <<
+    endl; // 1 (true)
 
+    //将两个序列合并成一个序列
+    //注意两个序列都必须是sorted ranges,结果也是sorted ranges
+    merge(iv5.begin(), iv5.end(), iv6.begin(), iv6.end(), iv7.begin());
+    for_each(iv7.begin(), iv7.end(), display<int>()); 
+    cout << endl; // iv7: 0 1 2 3 4 4 5 5 6 6 6 6 7 8
 
+    //符合条件的元素放在容器前段,不符合的元素放在容器后段,不保证保留原相对次序
+    partition(iv7.begin(), iv.end(), even());
+    for_each(iv7.begin(), iv7.end(), display<int>()); 
+    cout << endl; // iv7: 0 8 2 6 4 4 6 6 6 6 5 5 3 7 1
+
+    //去除连续而重复的数据(残余数据在后面)
+    unique(iv5.begin(), iv5.end());
+    for_each(iv5.begin(), iv5.end(), display<int>()); 
+    cout << endl; // iv5: 0 1 2 3 4 5 6 7 8 7 8
+
+    //去除连续而重复的数据,将结果放在另一处(残余数据在后面)
+    unique_copy(iv5.begin(), iv5.end(), iv7.begin());
+    for_each(iv7.begin(), iv7.end(), display<int>()); 
+    cout << endl; // iv5: 0 1 2 3 4 5 6 7 8 7 8 5 3 7 1
 }
 
  */
 
  //==== 单纯的数据处理
  //==== 线性移动、线性查找、计数、循环遍历、逐一对元素施行指定运算等操作
+
+//adjacent_find
+//找出第一组满足条件的相邻元素
+//version 1
 
 
 
