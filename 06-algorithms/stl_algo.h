@@ -363,10 +363,10 @@ int main()
 
  */
 
- //==== 单纯的数据处理
- //==== 线性移动、线性查找、计数、循环遍历、逐一对元素施行指定运算等操作
+//==== 单纯的数据处理
+//==== 线性移动、线性查找、计数、循环遍历、逐一对元素施行指定运算等操作
 
-//adjacent_find
+//=== adjacent_find ====
 //找出第一组满足条件的相邻元素
 //version 1: 查找相邻的重复元素
 template <class ForwardIterator>
@@ -397,7 +397,7 @@ BinaryPredicate binary_pred)
     return last;
 }
 
-//count
+//=== count ====
 //返回区间内等于value的元素个数
 template <class InputIterator, class T>
 typename iterator_traits<InputIterator>::difference_type
@@ -420,7 +420,7 @@ void count(InputIterator first, InputIterator last, const T& value, Size& n)
             ++n;
 }
 
-//count_if
+//=== count_if ====
 //返回区间内pred执行为true的元素个数
 template <class InputIterator, class Predicate>
 typename iterator_traits<InputIterator>::difference_type
@@ -442,7 +442,7 @@ void count_if(InputIterator first, InputIterator last, Predicate pred, Size& n)
             ++n;
 }
 
-//find
+//=== find ====
 //找出第一个匹配value的元素
 template <class InputIterator, class T>
 InputIterator find(InputIterator first, InputIterator last, const T& value)
@@ -452,7 +452,7 @@ InputIterator find(InputIterator first, InputIterator last, const T& value)
     return first;
 }
 
-//find_if
+//=== find_if ====
 //找出第一个pred执行为true的元素
 template <class InputIterator, class T>
 InputIterator find_if(InputIterator first, InputIterator last, const T& value)
@@ -462,7 +462,7 @@ InputIterator find_if(InputIterator first, InputIterator last, const T& value)
     return first;
 }
 
-//find_end
+//=== find_end ====
 //在序列一中,查找序列二的最后一次出现点
 template <class ForwardIterator1, class ForwardIterator2>
 inline ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1,
@@ -514,8 +514,626 @@ BidirectionalIterator2 first2, BidirectionalIterator2 last2, bidirectional_itera
         advance(result, -distance(first2, last2)); //调整回到子序列的起头处
         return result;
     }
+    //为什么要将逆向迭代器转成正向迭代器,而不直接移动逆向迭代器？
+    //因为正逆向迭代器之间有奇妙的"实体关系"和"逻辑关系"
+}
+
+//=== find_first_of ====
+//在序列一中,查找序列二的首次出现点
+//version 1
+template <class InputIterator, class ForwardIterator>
+InputIterator find_first_of(InputIterator first1, InputIterator last1,
+ForwardIterator first2, ForwardIterator last2)
+{
+    for (; first1 != last1; ++first1)
+        for (ForwardIterator i=first2; i != last2; ++i)
+            if (*first1 == *i)
+                return first1;
+    return last1;
+}
+
+//version 2
+template <class InputIterator, class ForwardIterator, class BinaryPredicate>
+InputIterator find_first_of(InputIterator first1, InputIterator last1,
+ForwardIterator first2, ForwardIterator last2, BinaryPredicate comp)
+{
+    for (; first1 != last1; ++first1)
+        for (ForwardIterator i=first2; i != last2; ++i)
+            if (comp(*first1, *i))
+                return first1;
+    return last1;
+}
+
+//=== find_each ====
+//将仿函数施加于区间上每个元素
+template <class InpuIterator, class Function>
+Function for_each(InpuIterator first, InpuIterator last, Function f)
+{
+    for (; first != last; ++first)
+        f(*first); //invoke f's function call[operator()]
+    return f;
+}
+
+//==== generate ====
+//将仿函数运算结果填写在区间所有元素上
+template <class ForwardIterator, class Generator>
+void generate(ForwardIterator first, ForwardIterator last, generate gene)
+{
+    for (; first != last; ++first)
+        *first = gen();
+}
+
+//=== generate_n ====
+//将仿函数运算结果填写在区间开始的n个元素上
+template <class OutputIterator, class Size, class Generator>
+void generate(OutputIterator first, Size n, generate gene)
+{
+    for (; n > 0; --n, ++first)
+        *first = gen();
+    return first;
+}
+
+//=== includes =====
+//判断序列二是否涵盖于序列一中,S1和S2必须都是有序(可重复)集合
+//version 1: operator<
+template <class InputIterator1, class InputIterator2>
+bool includes(InputIterator1 first1, InputIterator1 last1,
+InputIterator2 first2, InputIterator2 last2)
+{
+    while (first1 != last1 && first2 != last2)
+        if (*first2 < *first1)
+            return false;
+        else if (*first1 < *first2)
+            ++first1;
+        else
+            ++first1, ++first2;
+    return first2 == last2;
+}
+
+//version 2: comp
+template <class InputIterator1, class InputIterator2, class Compare>
+bool includes(InputIterator1 first1, InputIterator1 last1,
+InputIterator2 first2, InputIterator2 last2, Comapre comp)
+{
+    while (first1 != last1 && first2 != last2)
+        if (comp(*first2, *first1))
+            return false;
+        else if (comp(*first1, *first2))
+            ++first1;
+        else
+            ++first1, ++first2;
+    return first2 == last2;
+}
+
+//=== max_element =====
+//version 1
+template <class ForwardIterator>
+ForwardIterator max_element(ForwardIterator first, ForwardIterator last)
+{
+    if (first == last) return first;
+    ForwardIterator result = first;
+    while (++first != last)
+        if (*result < *first) 
+            result = first;
+    return result;
+}
+
+//version 2
+template <class ForwardIterator, class Compare>
+ForwardIterator max_element(ForwardIterator first, ForwardIterator last, 
+Compare comp)
+{
+    if (first == last) return first;
+    ForwardIterator result = first;
+    while (++first != last)
+        if (comp(*result, *first))
+            result = first;
+    return result;
+}
+
+//=== min_element =====
+//version 1
+template <class ForwardIterator>
+ForwardIterator min_element(ForwardIterator first, ForwardIterator last)
+{
+    if (first == last) return first;
+    ForwardIterator result = first;
+    while (++first != last)
+        if (*first < *result) 
+            result = first;
+    return result;
+}
+
+//version 2
+template <class ForwardIterator, class Compare>
+ForwardIterator min_element(ForwardIterator first, ForwardIterator last, 
+Compare comp)
+{
+    if (first == last) return first;
+    ForwardIterator result = first;
+    while (++first != last)
+        if (comp(*first, *result))
+            result = first;
+    return result;
+}
+
+//==== merge =====
+//将两个经过排序的集合S1和S2合并起来置于另一个空间
+//version 1
+template <class InputIterator1, class InputIterator2, class OutputIterator>
+OutputIterator merge(InputIterator1 first1, InputIterator1 last1,
+InputIterator2 first2, InputIterator2 last2, OutputIterator result)
+{
+    while (first1 != last1 && first2 != last2) {
+        if (*first2 < *first1) {
+            *result = *first2;
+            ++first2;
+        } else {
+            *result = *first1;
+            ++first1;
+        }
+        ++result;
+    }
+    return copy(first2, last2, copy(first1, last1, result));
+}
+
+//version 2
+template <class InputIterator1, class InputIterator2, 
+class OutputIterator, class Compare>
+OutputIterator merge(InputIterator1 first1, InputIterator1 last1,
+InputIterator2 first2, InputIterator2 last2, 
+OutputIterator result, Compare comp)
+{
+    while (first1 != last1 && first2 != last2) {
+        if (comp(*first2, *first1)) {
+            *result = *first2;
+            ++first2;
+        } else {
+            *result = *first1;
+            ++first1;
+        }
+        ++result
+    }
+    return copy(first2, last2, copy(first1, last1, result));
+}
+
+//=== partition =====
+//对区间元素重新排列,被一元条件运算符pred判定为true的放置在前端,false的放置在后端
+//该算法不保证保留元素的原始相对位置,对应稳定算法有stable_partition
+template <class BidirectionalIterator first, class Predicate>
+BidirectionalIterator partition(BidirectionalIterator first, BidirectionalIterator last, 
+Predicate pred)
+{
+    while (true) {
+        while (true)
+            if (first == last) 
+                return first;
+            else if (pred(*first))
+                ++first;
+            else
+                break;
+        --last;
+
+        while (true)
+            if (first == last) 
+                return first;
+            else if (pred(*last))
+                --last;
+            else
+                break;
+        iter_swap(first, last);
+        ++first;
+    }
+}
+
+//=== remove移除(但不删除) =====
+//移除区间内所有等于value的元素
+template <class ForwardIterator, class T>
+ForwardIterator remove(ForwardIterator first, ForwardIterator last, const T& value)
+{
+    first = find(first, last, value);
+    ForwardIterator next = first;
+    //利用remove_copy允许新旧容器重叠的性质进行移除操作
+    return first == last ? first : remove_copy(++next, last, first, value);
+}
+
+//=== remove_if移除(但不删除) =====
+//移除区间内所有被仿函数核定为true的元素
+template <class ForwardIterator, class Predicate>
+ForwardIterator remove_if(ForwardIterator first, ForwardIterator last,
+Predicate pred)
+{
+    first = find_if(first, last, pred);
+    ForwardIterator next = first;
+    //利用remove_copy_if允许新旧容器重叠的性质进行移除操作
+    return first == last ? first : remove_copy_if(++next, last, first, pred);
+}
+
+//=== remove_copy移除(但不删除) =====
+//移除区间内所有等于value的元素,将结果置于另一容器
+template <class InputIterator, class OutputIterator, class T>
+ForwardIterator remove_copy(InputIterator first, InputIterator last, 
+OutputIterator result, const T& value)
+{
+    for (; first != last; ++first) 
+        if (*first != value) {
+            *result = *first;
+            ++result;
+        }
+    return result;
+}
+
+//==== remove_copy_if移除(但不删除) ======
+//移除区间内所有被仿函数核定为true的元素,将结果置于另一容器
+template <class InputIterator, class OutputIterator, class Predicate>
+ForwardIterator remove_copy_if(InputIterator first, InputIterator last, 
+OutputIterator result, Predicate pred)
+{
+    for (; first != last; ++first) 
+        if (!pred(*first, value)) {
+            *result = *first; //赋值给新容器(保留不删除)
+            ++result;
+        }
+    return result;
+}
+
+//=== replace =====
+template <class ForwardIterator, class T>
+void replace(ForwardIterator first, ForwardIterator last, 
+const T& old_value, const T& new_value)
+{
+    for (; first != last; ++first)
+        if (*first == old_value) *first = new_value;
+}
+
+//=== replace_copy =====
+template <class InputIterator, class OutputIterator, class T>
+void replace_copy(InputIterator first, InputIterator last, 
+OutputIterator result, const T& old_value, const T& new_value)
+{
+    for (; first != last; ++first, ++result)
+        *result = *first == old_value ? new_value : *first;
+}
+
+//=== replace_if =====
+template <class ForwardIterator, class Predicate, class T>
+void replace(ForwardIterator first, ForwardIterator last, 
+Predicate pred, const T& new_value)
+{
+    for (; first != last; ++first)
+        if (pred(*first)) *first = new_value;
+}
+
+//==== replace_copy_if =====
+template <class Iterator, class OutputIterator, class Predicate, class T>
+void replace_copy(Iterator first, Iterator last, 
+OutputIterator result, Predicate pred, const T& new_value)
+{
+    for (; first != last; ++first, ++result)
+        *result = pred(*first) ? new_value : *first;
+}
+
+//==== reverse =====
+//将区间元素在原容器里颠倒重排
+template <class BidirectionalIterator>
+inline void reverse(BidirectionalIterator first, BidirectionalIterator last)
+{
+    __reverse(first, last, iterator_category(first));
+}
+
+template <class BidirectionalIterator>
+void __reverse(BidirectionalIterator first, BidirectionalIterator last, 
+bidirectional_iterator_tag)
+{
+    while (true)
+        if (first == last || first == --last)
+            return;
+        else
+            iter_swap(first++, last);
+}
+
+template <class RandomAccessIterator>
+void __reverse(RandomAccessIterator first, RandomAccessIterator last, 
+random_access_iterator_tag)
+{
+    while (first < last) //只有random iterator才可以这样的判断
+        iter_swap(first++, --last);
+}
+
+//==== reverse_copy ======
+template <class BidirectionalIterator, class OutputIterator>
+void reverse_copy(BidirectionalIterator first, BidirectionalIterator last, 
+OutputIterator result)
+{
+    while (first != last) {
+        --last;
+        *result = *last;
+        ++result;
+    }
+    return result;   
+}
+
+//==== rotate =====
+//将[first, middle)和[middle, last)元素互换
+template <class ForwardIterator>
+inline void rotate(ForwardIterator first, ForwardIterator middle, 
+ForwardIterator last)
+{
+    if (first == middle || middle == last) return;
+    __rotate(first, middle, last, distance_type(first), iterator_category(first));
+}
+
+template <class ForwardIterator, class Distance>
+void __rotate(ForwardIterator first, ForwardIterator middle, 
+ForwardIterator last, Distance*, forward_iterator_tag)
+{
+    for (ForwardIterator i = middle; ;) {
+        iter_swap(first, i);
+        ++first;
+        ++i;
+        if (first == middle) {
+            if (i == last) return;
+            middle = i;
+        } else if (i == last)
+            i = middle;
+    }
+}
+
+template <class BidirectionalIterator, class Distance>
+void __rotate(BidirectionalIterator first, BidirectionalIterator middle, 
+BidirectionalIterator last, Distance*, bidirectional_iterator_tag)
+{
+    reverse(first, middle);
+    reverse(middle, last);
+    reverse(first, last);
+}
+
+template <class RandomAccessIterator, class Distance>
+void __rotate(RandomAccessIterator first, RandomAccessIterator middle, 
+RandomAccessIterator last, Distance*, random_access_iterator_tag)
+{
+    Distance n = __gcd(last - first, middle - first);
+    while (n--)
+        __rotate_cycle(first, last, first + n; middle - first, value_type(first));
+}
+
+//=== 最大公因子,利用辗转相除法 =====
+template <class EuclideanRingElement>
+EuclideanRingElement __gcd(EuclideanRingElement m, EuclideanRingElement n)
+{
+    while (n != 0) {
+        EuclideanRingElement t = m % n;
+        m = n;
+        n = t;
+    }
+    return m;
+}
+
+template <class RandomAccessIterator, class Distance, class T>
+void __rotate__cycle(RandomAccessIterator first, RandomAccessIterator last, 
+RandomAccessIterator initial, Distance shift, T*)
+{
+    T value = *initial;
+    RandomAccessIterator p1 = initial;
+    RandomAccessIterator p2 = p1 + shift;
+    while (p2 != initial) {
+        *p1 = *ps;
+        p1 = p2;
+        if (last - p2 > shift)
+            p2 += shift;
+        else    
+            p2 = first + (shift -(last - p2));
+    }
+    *p1 = value;
+}
+
+//==== rotate_copy =====
+template <class ForwardInterator, class OutputIterator>
+OutputIterator rotate_copy(ForwardInterator first, ForwardInterator middle,
+ForwardInterator last, OutputIterator result)
+{
+    return copy(first, middle, copy(middle, last, result));
+}
+
+//==== search ======
+//在序列1中查找序列2的首次出现点
+//version 1
+template <class ForwardIterator1, class ForwardIterator2>
+inline ForwardIterator1 search(ForwardIterator1 first1, ForwardIterator1 last1,
+ForwardIterator2 first2, ForwardIterator2 last2)
+{
+    return __search(first1, last1, first2, last2, 
+    distance_type<first>(first1), distance_type(first2));
+}
+
+template <class ForwardIterator1, class ForwardIterator2, 
+class Distance1, class Distance2>
+inline ForwardIterator1 __search(ForwardIterator1 first1, ForwardIterator1 last1,
+ForwardIterator2 first2, ForwardIterator2 last2, Distance1*, Distance2*)
+{
+    Distance1 d1 = 0;
+    distance(first1, last1, d1);
+    Distance1 d2 = 0;
+    distance(first1, last1, d2);
+
+    if (d1 < d2) return last1;
+
+    ForwardIterator1 c1 = first1;
+    ForwardIterator1 c2 = first2;
+
+    while (c1 != last2)
+        if (*c1 == *c2) { //equality
+            ++c1;
+            ++c2;
+        } else {
+            if (d1 == d2)
+                return last1;
+            else {
+                c1 = ++first1;
+                c2 = first2;
+                --d1;
+            }
+        }
+        return first1;
+}
+
+//version 2: pred 略
+
+//==== search_n ======
+//version 1: 查找元素value连续出现count次的子序列,返回其发生位置
+template <class ForwardIterator, class Integer, class T>
+ForwardIterator search_n(ForwardIterator first, ForwardIterator last, 
+Integer count, const T& value)
+{
+    if (count <= 0)
+        return first;
+    else {
+        first = find(first, last, value); //首次出现点
+        while (first != last) {
+            Integer n = count - 1;
+            ForwardIterator i = first;
+            ++i;
+            while (i != last && n != 0 && *i == value) {
+                ++i;
+                --n;
+            }
+            if (n == 0)
+                return first;
+            else
+                first = find(i, last, value);
+        }
+        return last;
+    }
+}
+
+//version 2: pred
+template <class ForwardIterator, class Integer, class T, class BinaryPredicate>
+ForwardIterator search_n(ForwardIterator first, ForwardIterator last,
+Integer count, const T& value, BinaryPredicate binary_pred) 
+{
+    if (count <= 0)
+        return first;
+    else {
+        while (first != last) {
+            if (binary_pred(*first, value)) 
+                break;
+            ++first;
+        }
+        while (first != last) {
+            Integer n = count - 1;
+            ForwardIterator i = first;
+            ++i;
+            while (i != last && n != 0 && binary_pred(*i, value)) {
+                ++i;
+                --n;
+            }
+            if (n == 0)
+                return first;
+            else {
+                while (i != last) {
+                    if (binary_pred(*i, value)) break;
+                    ++i;
+                }
+                first = i; //回到外循环
+            }
+        }
+        return last;
+    }
+}
+
+//===== swap_ranges =======
+template <class ForwardIterator1, class ForwardIterator2>
+ForwardIterator2 swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1,
+ForwardIterator2 first2)
+{
+    for (; first1 != last1; ++first1, ++first2)
+        iter_swap(first1, first2);
+    return first2;
+}
+
+//==== transform ======
+//以仿函数op作用域区间内每个元素,并将结果回写至一个新序列(也可以原序列)
+//version 1
+template <class Inputiterator, class OutputIterator, class UnaryOperation>
+OutputIterator transform(InputIterator first, Inputiterator last, 
+OutputIterator result, UnaryOperation op)
+{
+    for (; first != last; ++first, ++result)
+        *result = op(*first);
+    return result;
+}
+
+//version 2
+template <class Inputiterator1, class Inputiterator2, class OutputIterator, class UnaryOperation>
+OutputIterator transform(InputIterator first1, Inputiterator last1, 
+InputIterator first2, OutputIterator result, UnaryOperation op)
+{
+    for (; first1 != last1; ++first1, ++first2, ++result)
+        *result = op(*first1, *first2);
+    return result;
+}
+
+//===== unique ======
+//移除序列内重复元素
+//stable
+//version 1: equality
+template <class ForwardIterator>
+ForwardIterator unique(ForwardIterator first, ForwardIterator last)
+{
+    first = adjacent_find(first, last);
+    return unique_copy(first, last, first);
+}
+
+//version 2: binary predicate 略
+
+//===== unique_copy =======
+//version 1: equality
+template <class InputIterator, class OutputIterator>
+inline OutputIterator unique_copy(InputIterator first, InputIterator last, 
+OutputIterator result)
+{
+    if (first == last) return result;
+    return __unique_copy(first, last, result, iterator_category(result));
+}
+
+//version 2: binary predicate 略
+
+template <class InputIterator, class ForwardIterator>
+ForwardIterator __unique_copy(InputIterator first, InputIterator last,
+ForwardIterator result, forward_iterator_tag)
+{
+    *result = *first;
+    while (++first != last)
+        if (*result != *first) *++result = *first;
+    return ++result;
+}
+
+template <class InputIterator, class OutputIterator>
+OutputIterator __unique_copy(InputIterator first, InputIterator last,
+OutputIterator result, output_iterator_tag)
+{
+    //以下output iterator有一些功能限制,所以必须知道其value type
+    return __unique_copy(first, last, result, value_type(first));
+}
 
 
+template <class InputIterator, class OutputIterator, class T>
+OutputIterator __unique_copy(InputIterator first, InputIterator last,
+OutputIterator result, T*)
+{
+    //output iterator为write only, 无法像forward iterator那样可以读取
+    //所以不能有类似*result != *first这样的判断,所以才需要有这一版辅助函数
+    //例如ostream_iterator就是一个output iterator
+
+    //T为output iterator的value_type
+    T value = *first;
+    *result = value;
+    while (++first != last) 
+        if (value != *first) {
+            value = *first;
+            *++result = value;
+        }
+    return ++result;
 }
 
 
