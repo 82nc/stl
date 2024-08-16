@@ -1136,5 +1136,245 @@ OutputIterator result, T*)
     return ++result;
 }
 
+//以下算法工作原理比较复杂,以下先举例说明
+//**********************************/
+#include <algorithm>
+#include <vector>
+#include <functional>
+#include <iostream>
+
+using namespace std;
+
+struct even {
+    bool operator()(int x) const { return x%2 ? false : true; }
+};
+
+
+int main()
+{
+    int ia[] = { 12, 17, 20, 22, 23, 30, 33, 40 };
+    vector<int> iv(ia, ia+sizeof(ia)/sizeof(int));
+
+    cout << *lower_bound(iv.begin(), iv.end(), 21) << endl; //22
+    cout << *upper_bound(iv.begin(), iv.end(), 21) << endl; //22
+    cout << *lower_bound(iv.begin(), iv.end(), 22) << endl; //22
+    cout << *upper_bound(iv.begin(), iv.end(), 22) << endl; //23
+
+    //面对有序区间(sorted range),可以二分查找法寻找某个元素
+    cout << binary_search(iv.begin(), iv.end(), 33) << endl; //1-true
+    cout << binary_search(iv.begin(), iv.end(), 34) << endl; //0-false
+
+    //下个排列组合
+    next_permutation(iv.begin(), iv.end());
+    copy(iv.begin(), iv.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+    //40 33 30 23 22 20 17 12
+
+    //在iv尾端附加新元素,使成为40 33 30 23 22 20 17 12 22 30 17
+    iv.push_back(22);
+    iv.push_back(30);
+    iv.push_back(17);
+
+    //排序并保持"原相对位置"
+    stable_sort(iv.begin(), iv.end());
+    copy(iv.begin(), iv.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+    //12 17 17 20 22 22 23 30 33 40
+
+    //面对一个有序区间,找出其中一个子区间,其内每个元素都与某特定元素值相同
+    //返回该子区间的头尾迭代器.如果没有这样的子区间,返回的头尾迭代器均指向
+    //该特定元素可插入(可仍保持排序)的地点
+    pair<vector<int>::iterator, vector<int>::iterator> pairIte;
+    pairIte = equal_ranges(iv.begin(), iv.end(), 22);
+    cout << *(pairIte.first) << endl; //22(lower_bound)
+    cout << *(pairIte.second) << endl; //23(upper_bound)
+
+    pairIte = equal_range(iv.begin(), iv.end(), 25);
+    cout << *(pairIte.first) << endl; //30(lower_bound)
+    cout << *(pairIte.second) << endl; //30(upper_bound)
+
+    random_shuffle(iv.begin(), iv.end());
+    copy(iv.begin(), iv.end(), ostream_iterator<int>(cout, " "));
+    cout << endl; //22 30 30 17 33 40 17 23 22 12 20
+
+    //将小于*(iv.begin()+5)(本例40)的元素置于该元素之左
+    //其余置于该元素之右,不保证维持原有的相对位置
+    nth_element(iv.begin(), iv.end(), ostream_iterator<int>(cout, " "));
+    copy(iv.begin(), iv.end(), ostream_iterator<int>(cout, " "));
+    cout << endl; //20 12 22 17 17 22 23 30 33 40
+
+    //将大于*(iv.begin()+5)(本例为22)的元素置于该元素之左
+    //其余置于该元素之右,不保证维持原有的相对位置
+    nth_element(iv.begin(), iv.end()+5, iv.end(), greater<int>());
+    copy(iv.begin(), iv.end(), ostream_iterator<int>(cout, " "));
+    cout << endl;
+
+    //以"是否符合even条件"为依据,将符合者置于左段,不符合这置于右段
+    //保证维持原有的相对位置.如不需要"维持原有的相对位置",可改用partition()
+    stable_partition(iv.begin(), iv.end()+5, iv.end(), even());
+    copy(iv.begin(), iv.end(), ostream_iterator<int>(cout, " "));
+    cout << endl; //40 30 30 22 22 12 20 33 23 17 17
+
+}
+
+//lower_bound(应用于有序空间)
+//version 1: operator<
+template <class ForwardIterator, class T>
+inline ForwardIterator lower_bound(ForwardIterator first,
+ForwardIterator last, const T& value)
+{
+    return __lower_bound(first, last, value, distance_type(first),
+    iterator_category(first));
+}
+
+//version 2: comp
+template <class ForwardIterator, class T, class Compare>
+inline ForwardIterator lower_bound(ForwardIterator first, ForwardIterator last,
+const T& value, Compare comp)
+{
+    return __lower_bound(first, last, value, comp, distance_type(first),
+    iterator_category(first));
+}
+
+//__lower_bound: forward_iterator
+template <class ForwardIterator, class T, class Distance>
+ForwardIterator __lower_bound(ForwardIterator first, 
+ForwardIterator last, const T& value, Distance*, forward_iterator_tag)
+{
+    Distance len = 0;
+    distance(first, last, len); //求整个区间的长度len
+    Distance half;
+    ForwardIterator middle;
+
+    while (len > 0) {
+        half = len >> 1;
+        middle = first;
+        advance(middle, half);
+        if (*middle < value) {
+            first = middle;
+            ++first;
+            len = len - half - 1;
+        } else
+            len = half;
+    }
+    return first;
+}
+
+//__lower_bound: random_access_iterator
+template <class RandomAccessIterator, class T, class Distance>
+RandomAccessIterator __lower_bound(RandomAccessIterator first, 
+RandomAccessIterator last, const T& value, Distance*, random_access_iterator)
+{
+    Distance len = last - first;
+    Distance half;
+    RandomAccessIterator middle;
+
+    while (len > 0) {
+        half = len >> 1;
+        middle = first + half;
+        if (*middle < value) {
+            first = middle + 1;
+            len = len - half - 1;
+        } else 
+            len = half;
+    }
+    return first;
+}
+
+//upper_bound(应用于有序空间)
+//version 1: operator<
+template <class ForwardIterator, class T>
+inline ForwardIterator upper_bound(ForwardIterator first, ForwardIterator last,
+const T& value)
+{
+    return __upper_bound(first, last, value, distance_type(first),
+    iterator_category(first));
+}
+
+//version 2: comp
+template <class ForwardIterator, class T, class Compare>
+inline ForwardIterator upper_bound(ForwardIterator first, ForwardIterator last,
+const T& value, Compare comp)
+{
+    return __upper_bound(first, last, value, comp, distance_type(first),
+    iterator_category(first));
+}
+
+//__upper_bound: forward_iterator
+template <class ForwardIterator, class T, class Distance>
+ForwardIterator __upper_bound(ForwardIterator first, ForwardIterator last, 
+const T& value, Distance*, forward_iterator_tag)
+{
+    Distance len = 0;
+    distance(first, last, len); //求整个区间的长度len
+    Distance half;
+    ForwardIterator middle;
+
+    while (len > 0) {
+        half = len >> 1;
+        middle = first;
+        advance(middle, half);
+        if (value < *middle) {
+            len = half;
+        } else {
+            first = middle;
+            ++first;
+            len = len - half - 1;
+        }
+    }
+    return first;
+}
+
+//__upper_bound: random_access_iterator
+template <class RandomAccessIterator, class T, class Distance>
+RandomAccessIterator __upper_bound(RandomAccessIterator first, 
+RandomAccessIterator last, const T& value, Distance*, random_access_iterator)
+{
+    Distance len = last - first;
+    Distance half;
+    RandomAccessIterator middle;
+
+    while (len > 0) {
+        half = len >> 1;
+        middle = first + half;
+        if (value < *middle) {
+            len = half;
+        } else {
+            first = middle + 1;
+            len = len - half - 1;
+        }
+    }
+    return first;
+}
+
+//binary_search(应用于有序空间)
+//version 1
+template <class ForwardIterator, class T>
+bool binary_search(ForwardIterator first, ForwardIterator last, const T& value)
+{
+    ForwardIterator i = lower_bound(first, last, value);
+    return i !=last && !(value < *i);
+}
+
+//version 2
+template <class ForwardIterator, class T, class Compare>
+bool binary_search(ForwardIterator first, ForwardIterator last, 
+const T& value, Compare comp)
+{
+    ForwardIterator i = lower_bound(first, last, value, comp);
+    return i !=last && !(value < *i);
+}
+
+//next_permutation
+//会取得[first,last)所标识之序列的下一个排列组合,如果没有下一个
+//排列组合,便返回false;否则返回true
+//version 1: less-than
+template <class BidirectionalIterator>
+bool next_permmutation(BidirectionalIterator first, BidirectionalIterator last)
+{
+    
+}
+
+
 
 #endif // SGI_STL_ALGO_H
