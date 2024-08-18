@@ -10,7 +10,7 @@
  * hash_set/hash_multiset则不能使用
  * =========================================================== */
 
-////========== set_union ============
+//========== set_union ============
 //构造S1, S2的并集
 //stable算法
 
@@ -38,7 +38,7 @@ InputIterator1 first2, InputIterator1 last2, OutputIterator result)
         }
         ++result;
     }
-    //一下尚未到达尾端的区间的所有剩余元素拷贝到目的端
+    //以下尚未到达尾端的区间的所有剩余元素拷贝到目的端
     //此刻[first1,last1)和[first2,last2)之中有一个是空的
     return copy(first2, last2, copy(first1, last1, result));
 }
@@ -853,7 +853,7 @@ OutputIterator result)
     return result;   
 }
 
-//==== rotate =====
+//==== rotate ======
 //将[first, middle)和[middle, last)元素互换
 template <class ForwardIterator>
 inline void rotate(ForwardIterator first, ForwardIterator middle, 
@@ -1217,7 +1217,7 @@ int main()
 
 }
 
-//lower_bound(应用于有序空间)
+//===== lower_bound(应用于有序空间) =====
 //version 1: operator<
 template <class ForwardIterator, class T>
 inline ForwardIterator lower_bound(ForwardIterator first,
@@ -1281,7 +1281,7 @@ RandomAccessIterator last, const T& value, Distance*, random_access_iterator)
     return first;
 }
 
-//upper_bound(应用于有序空间)
+//====== upper_bound(应用于有序空间) =======
 //version 1: operator<
 template <class ForwardIterator, class T>
 inline ForwardIterator upper_bound(ForwardIterator first, ForwardIterator last,
@@ -1347,7 +1347,7 @@ RandomAccessIterator last, const T& value, Distance*, random_access_iterator)
     return first;
 }
 
-//binary_search(应用于有序空间)
+//===== binary_search(应用于有序空间) ======
 //version 1
 template <class ForwardIterator, class T>
 bool binary_search(ForwardIterator first, ForwardIterator last, const T& value)
@@ -1365,16 +1365,654 @@ const T& value, Compare comp)
     return i !=last && !(value < *i);
 }
 
-//next_permutation
+//===== next_permutation =======
 //会取得[first,last)所标识之序列的下一个排列组合,如果没有下一个
 //排列组合,便返回false;否则返回true
 //version 1: less-than
 template <class BidirectionalIterator>
 bool next_permmutation(BidirectionalIterator first, BidirectionalIterator last)
 {
-    
+    if (first == last) 
+        return false;
+    BidirectionalIterator i = first;
+    ++i;
+    if (i == last) 
+        return false;
+    i = last;
+    --i;
+    for (;;) {
+        BidirectionalIterator ii = i;
+        --i;
+        //以上锁定一组(两个)相邻元素
+        if (*i < *ii) {
+            BidirectionalIterator j = last;
+            while (!(*i < *--j)); //由尾端往前找,直到遇上比*i大的元素
+            iter_swap(i, j);
+            reverse(ii, last); //ii之后的元素全部逆向重排
+            return true;
+        }
+        if (i == first) { //进行至最前面
+            reverse(first, last); //全部逆向重排
+            return false;
+        }
+    }
+}
+
+//version 2: comp 略
+
+//===== prev_permutation =======
+//version: less-than
+template <class BidirectionalIterator>
+bool prev_permutation(BidirectionalIterator first, BidirectionalIterator last)
+{
+    if (first == last) 
+        return false;
+    BidirectionalIterator i = first;
+    ++i;
+    if (i == last) return false;
+    i = last;
+    --i;
+
+    for (;;) {
+        BidirectionalIterator ii = i;
+        --i;
+        if (*ii < *i) {
+            BidirectionalIterator j = last;
+            while (!(*--j< *i));
+            iter_swap(i, j);
+            reserve(ii, last);
+            return true;
+        }
+        if (i == first) {
+            reverse(first, last);
+            return false;
+        }
+    }
+}
+
+//version 2: comp 略
+
+//===== random_shuffle =======
+//元素次序随机重排
+//version 1: 使用内部随机数产生器
+template <class RandomAccessIterator>
+inline void random_shuffle(RandomAccessIterator first,
+RandomAccessIterator last)
+{
+    __random_shuffle(first, last, distance_type(first));
+}
+
+template <class RandomAccessIterator, class Distance>
+void __random_shuffle(RandomAccessIterator first, RandomAccessIterator last,
+Distance*)
+{
+    if (first == last) return;
+    for (RandomAccessIterator i=first+1; i!=last; ++i)
+    #ifdef __STL_NO_DRAND48
+        iter_swap(i, first + Distance(rand()%((i-first) + 1)));
+    #else
+        iter_swap(i, first + Distance(rand48()%((i-first) + 1)));
+    #endif
+    //注意在我的GCC2.91.57中,__STL_NO_DRAND48是未定义的,因此上述实现代码
+    //会采用lrand48()那个版本,单编译时却说lrand48() undeclared
+}
+
+//version 2
+template <class RandomAccessIterator, class RandomNumberGenerator>
+void random_shuffle(RandomAccessIterator first, RandomAccessIterator last,
+RandomNumberGenerator& rand)
+{
+    if (first == last) return;
+    for (RandomAccessIterator i=first+1; i!=last; ++i)
+        iter_swap(i, first + rand((i - first) + 1));
+}
+
+//===== partial_sort/partial_sort_copy
+//本算法middle迭代器(位于序列[first,last)),然后重新安排[first,last)
+//然后重新安排[first,last),使序列中的middle-first个最小元素以递增顺序排序
+//置于[first,midlle)内,其余last-middle个元素安置于[middle,last)中,不保证
+//有任何特定顺序
+
+//version 1
+template <class RandomAccessIterator, class T>
+inline void partial_sort(RandomAccessIterator first, RandomAccessIterator middle,
+RandomAccessIterator last)
+{
+    __partial_sort(first, last, value_type(first));
+}
+
+template <class RandomAccessIterator, class T>
+inline void __partial_sort(RandomAccessIterator first, RandomAccessIterator middle,
+RandomAccessIterator last, T*)
+{
+    make_heap(first, middle);
+    //注意以下的i<last判断操作只适用于random iterator
+    for (RandomAccessIterator i = middle; i < last; ++i)
+        if (*i < *first)
+            __pop_heap(first, middle, i, T(*i), distance_type(first));
+    sort_heap(first, middle);
+}
+
+//version 1
+template <class InputIterator, class RandomAccessIterator>
+inline RandomAccessIterator partial_sort_copy(InputIterator first, InputIterator middle,
+RandomAccessIterator result_first, RandomAccessIterator result_last)
+{
+    //...
+}
+
+//version 2
+template <class InputIterator, class RandomAccessIterator, class Compare>
+inline RandomAccessIterator partial_sort_copy(InputIterator first, InputIterator middle,
+RandomAccessIterator result_first, RandomAccessIterator result_last, Compare comp)
+{
+    //...
+}
+
+/*
+int ia[12] = { 69, 23, 80, 42, 17, 15, 26, 51, 19, 12, 35, 8 };
+vector<int> vec(ia, ia+12);
+ostream_iterator<int> oite(cout, " ");
+
+partital_sort(vec.begin(), vec.begin()+7, vec.end());
+copy(vec.begin(), vec.end(), oite); cout << endl;
+//8 12 15 17 19 23 26 80 69 51 42 35
+
+vector<int> res(7);
+partital_sort_copy(vec.begin(), vec.begin()+7, res.begin());
+copy(res.begin(), res.end(), oite); cout << endl;
+//26 23 19 17 15 12 8
+
+ */
+
+
+//========== SORT ===========
+/*
+ 1.STL所有的关系型容器都有自动排序功能(底层采用RB-Tree),不需要这个算法
+ 2.序列式容器stack,queue,priority-queue都有特别的出入口,不允许对元素修改
+ 3.序列式容器vector,deque,list.前两者迭代器属于RandomAccessIterator,适合
+   sort算法;list的迭代器属于bidirectionalIterator,不适用sort算法,包括slist
+   其迭代器是ForwardIterator,只能用他们自己提供的member function sort
+ */
+
+//STL sort算法,数据量大的时候采用Quick Sort,分段递归排序,一旦分段后的数据量
+//小于某个门槛,为避免Quick Sort的递归调用带来过大的额外负荷,就改用Insertion
+//Sort.如果递归层次过深,还会改用Heap Sort.
+
+/*
+Insertion Sort
+以双层循环的形式进行,外循环遍历整个序列,每次迭代决定出一个子区间;
+内层循环遍历子区间,将子区间内每个元素"逆转对"(迭代器i,j, i<j, *i>*j)倒转过来
+一旦不存在"逆转对",则序列排列完毕.算法复杂度O(n^2)
+STL并不开放Insertion Sort,故其函数仅为内部使用
+*/
+
+//version 1: operator <
+template <class RandomAccessIterator>
+void __sertionion_sort(RandomAccessIterator first, RandomAccessIterator last)
+{
+    if (first == last) return;
+    for (RandomAccessIterator i = first +1; i != last; ++i) //外循环
+        __linear_insert(first, i, value_type(first));
+        //以上[first,i)形成一个子区间
+}
+
+//version 2: comp 略
+
+template <class RandomAccessIterator, class T>
+inline void __linear_insert(RandomAccessIterator first, RandomAccessIterator last, T*)
+{
+    T value = *last;
+    if (value < *first) {
+        copy_backward(first, last, last+1); //将整个区间向右移个位置
+        *first = value;
+    } else {
+        __unguarded_linear_insert(last, value);
+    }
+}
+
+template <class RandomAccessIterator, class T>
+void __unguarded_linear_insert(RandomAccessIterator last, T value)
+{
+    RandomAccessIterator next = last;
+    --next;
+    //insertion sort 的内循环
+    while (value < *next) {
+        *last = *next;
+        last = next;
+        --next;
+    }
+    *last = value;
+}
+/*
+上述函数之所以命名成unguarded_x是因为,一般insertion sort在内循环原本需要做两次判断
+判断是否两相邻元素是"逆转对",同时也判断循环的行进是否过边界.但由于上述所示源代码会导致
+最小值必然在内循环子区间的最边缘,所以两个判断可合为一个判断,所以称unguarded_(忽略边界检查),
+省下一个判断操作.
+*/
+
+/*
+Quick Sort
+大量数据情况下,insert sort算法的复杂度O(n^2)太高,可采用目前已知最快的排序算法
+quick sort,其平均复杂度O(nlogn),最坏的情况将达O(n^2),不过introSort(极类似
+media-of-three QuickSort的一种排序算法)可将最坏情况推进到O(nlogn)
+
+算法说明如下. 假设S代表将被处理的序列
+1.如果S的元素个数为0或者1,结束.
+2.取S中的任何一个元素,当作枢轴(pivot)v.
+3.将S分割成L,R两段,使L内的每个元素都小于或等于v,R内的每个元素都大于或等于v
+4.对L,R递归执行quick sort
+
+其本质就是将大区间分割成小区间,分段排序;每个小区间的排序完成后,串联起来的
+大区间就完成了排序.最坏的情况发生在分割时产生了一个空区间,那样的话就没达到
+分割的预期效果.
+
+Media-of-Tree(三点中值)
+任何一个元素都可以被选中当枢轴(pivot),但是其是否合适会影响快排的效率,为了避免
+"元素输入时不够随机"所带来的恶化效应,最为理想稳妥的方式便是取整个序列的头、尾、中央
+三个位置的元素,一起中间值作为枢轴,为了能够快速取出中央位置的元素,显然迭代器必须能够
+随即定位,亦即必须是个RandomAccessIterators
+*/
+
+//返回a,b,c中间值
+template <class T>
+inline const T& __media(const T& a, const T& b, const T& c)
+{
+    if (a < b)
+        if (b < c) return b;
+        else if (a < c) return c;
+        else return a;
+    else if (a < c) return a;
+    else if (b < c) return c;
+    else return b;
+}
+
+//Partitioning(分割)
+/* 
+分割方法不止一种,以下SGI STL提供的简单有良好成效的做法
+*/
+//version 1
+template <class RandomAccessIterator, class T>
+RandomAccessIterator __unguarded_partition(RandomAccessIterator first,
+RandomAccessIterator last, T pivot)
+{
+    while (true) {
+        while (*first < pivot) ++first;
+        --last;
+        while (pivot < *last) --last;
+        //以下判断只适用于random iterator
+        if (!(first < last)) return first; //交错就停止
+        iter_swap(first, last);
+        ++first;
+    }
+    //返回分割后的右段第一个元素位置
 }
 
 
+//SGI STL Quick Sort
+
+/*
+threshold
+面对一个只有十来个元素的小型序列,使用像quick sort的这样复杂而需要大量运算的排序算法
+可能也是不划算的.那么适度评估序列以选择Quick Sort或者Insertion Sort怎么判定呢?
+
+final insertion sort
+如果我们令某个大小以下的序列滞留在几近完成的状态,最后再以一次insertion sort完成
+将所有这些几近完成但尚未成功的子序列做一次完整排序,其效率一般认为会比将所有子序列
+彻底排序要更好.这是因为insertion sort在面对几近排序的序列时有很好表现.
+
+introsort
+不当的枢轴选取会导致quick sort恶化为O(n^2)
+David R.Musser于1996年提出一种混合式排序算法:Introspective Sorting(内省式排序)
+其行为在大部分情况下与media-of-three quick sort完全相同.但当分割行为(partitioning)
+有恶化为二次行为的倾向时,能够自我侦测,转而改用Heap Sort,是其效率维持在Heap Sort的O(nlogn)
+又比一开始就是用Heap Sort来得好.
+*/
+
+//=== sort ====
+//version 1
+template <class RandomAccessIterator>
+inline void sort(RandomAccessIterator first, RandomAccessIterator last)
+{
+    if (first != last) {
+        __introsort_loop(first, last, value_type(first), __lg(last-first)*2);
+        __final_insertion_sort(first, last);
+    }
+}
+
+//__lg()控制分割恶化的情况
+//找出2^k <= n的最大值k
+template <class Size>
+inline Size __lg(Size n)
+{
+    Size k;
+    for (k=0; n>1; n>>=1) ++k;
+    return k;
+}
+
+//比如last-first=40,则__introsort_loop的最后一个参数为5*2,表示最多允许分割10层
+
+//version 1
+const int __stl_threshold = 16;
+template <class RandomAccessIterator, class T, class Size>
+void __introsort_loop(RandomAccessIterator first, RandomAccessIterator last,
+T*, Size depth_limit)
+{
+    //以下__stl_threshold是个全局常数,稍早定义为const int 16
+    while (last - first > __stl_threshold) { //> 16
+        if (depth_limit == 0) {
+            partial_sort(first, last, last); //改用heapsort
+            return;
+        }
+        --depth_limit;
+        //以下是media-of-three partition,选择一个较好的枢轴并决定分割
+        RandomAccessIterator cur = __unguarded_partition(
+            first, last, 
+            T(__media(*first, *(first+(last-first)/2), *(last-1))));
+        //对右半段递归进行sort
+        __introsort_loop(cur, last, value_type(first), depth_limit);
+        last = cur;
+        //现在回到while循环,准备对其左半段递归进行sort
+        //这种写法可读性差,效率并没有比较好
+        //RW STL采用一般教科书写法(直观地对左半段和右半段递归)
+    }
+}
+
+//version 1
+template <class RandomAccessIterator>
+void __final_insertion_sort(RandomAccessIterator first, RandomAccessIterator last)
+{
+    if (last - first > __stl_threshold) { //>16
+        __insertion_sort(first, first + __stl_threshold, last);
+        __unguarded_insertion_sort(first + __stl_threshold, last);
+    } else {
+        __insertion_sort(first, last);
+    }
+}
+
+//version 1
+template <class RandomAccessIterator>
+inline void __unguarded_insertion_sort(RandomAccessIterator first,
+RandomAccessIterator last)
+{
+    __unguarded_insertion_sort_aux(first, last, value_type(first));
+}
+
+//version 1
+template <class RandomAccessIterator, class T>
+inline void __unguarded_insertion_sort_aux(RandomAccessIterator first,
+RandomAccessIterator last, T*)
+{
+    for (RandomAccessIterator i=first; 1!=last; ++i)
+        __unguarded_linear_insert(i, T(*i));
+}
+
+//对比的话RW STL的sort则是纯粹的quick sort,不是introSort
+template <class RandomAccessIterator>
+inline void sort(RandomAccessIterator first, RandomAccessIterator last)
+{
+    if (!(first == last)) {
+        __quick_sort_loop(first, last);
+        __final_insertion_sort(first, last); //其内部操作与SGI STL完全相同
+    }
+}
+
+template <class RandomAccessIterator>
+inline void __quick_sort_loop(RandomAccessIterator first,
+RandomAccessIterator last)
+{
+    __quick_sort_loop_aux(first, last, __RWSTD_VALUE_TYPE(first));
+}
+
+template <class RandomAccessIterator, class T>
+void __quick_sort_loop_aux(RandomAccessIterator first, 
+RandomAccessIterator last, T*)
+{
+    while (last - first > stl_htreshold) {
+        //media-of-3 partition
+        RandomAccessIterator cut = __unguarded_partition(
+            first, last,
+            T(__media(*first, *(first+(last-first)/2, *(last-1)))));
+        if (cut - first >= last - cut) {
+            __quick_sort_loop(cut, last); //右段递归
+            last = cut;
+        } else {
+            __quick_sort_loop(first, cut); //左段递归
+            first = cut;
+        }
+    }
+}
+
+//==== equal range ======
+/*
+二分查找的一个版本,试图在已排序序列[first,last)中寻找value,他返回一对迭代器i和j
+i:在不破坏原次序的的前提下,value可插入的第一个位置(亦即lower_bound)
+j:在不破坏原次序的的前提下,value可插入的最后个位置(亦即upper_bound)
+[i,i)内每个元素都等同于value,该区间是[first,last)内符合此性质的的最大子区间
+*/
+
+//version 1: operator<
+template <class ForwardIterator, class T>
+inline pair<ForwardIterator, ForwardIterator>
+equal_range(ForwardIterator first, ForwardIterator last, const T& value)
+{
+    //根据迭代器的种类类型(category),采用不同策略
+    return __equal_range(first, last, value, distance_type(first),
+        iterator_category(first));
+}
+
+//version 2: comp
+
+//version 1: random_access_iterator
+template <class RandomAccessIterator, class T, class Distance>
+pair<RandomAccessIterator, RandomAccessIterator>
+__equal_range(RandomAccessIterator first, RandomAccessIterator last,
+const T& value, Distance*, random_access_iterator_tag)
+{
+    Distance len = last - first;
+    Distance half;
+    RandomAccessIterator middle, left, right;
+
+    while (len > 0) {
+        half = len >> 1;
+        middle = first + half;
+        if (*middle < value) {
+            first = middle + 1;
+            len = len - half - 1;
+        } else if (value < *middle) {
+            len = half;
+        } else {
+            left = lower_bound(first, middle, value);
+            right = upper_lower(++middle, first+len, value);
+            return pair<RandomAccessIterator, RandomAccessIterator>(left, right);
+        }
+    }
+    //整个区间内都没有匹配的值,那么应该返回一对迭代器,指向第一个大于value的元素
+    return pair<RandomAccessIterator, RandomAccessIterator>(first, last);
+}
+
+//version 2: forward_iterator
+template <class ForwardIterator, class T, class Distance>
+pair<ForwardIterator, ForwardIterator>
+__equal_range(ForwardIterator first, ForwardIterator last,
+const T& value, Distance*, forward_iterator_tag)
+{
+    Distance half;
+    Distance len = last - first;
+    ForwardIterator middle, left, right;
+
+    while (len > 0) {
+        half = len >> 1;
+        middle = first;
+        advance(middle, half);
+        if (*middle < value) {
+            first = middle;
+            ++first;
+            len = len - half - 1;
+        } else if (value < *middle) {
+            len = half;
+        } else {
+            left = lower_bound(first, middle, value);
+            advance(first, len);
+            right = upper_lower(++middle, first+len, value);
+            return pair<ForwardIterator, ForwardIterator>(left, right);
+        }
+    }
+    //整个区间内都没有匹配的值,那么应该返回一对迭代器,指向第一个大于value的元素
+    return pair<ForwardIterator, ForwardIterator>(first, first);
+}
+
+//inplace_merge(应用于有序空间)
+template <class BidirectionalIterator>
+inline void inplace_merge(BidirectionalIterator first, 
+BidirectionalIterator middle, BidirectionalIterator last)
+{
+    //只要有任何一个序列为空,就什么都不必做
+    if (first == middle || middle == last) return;
+    __inplace_merge_aux(first, middle, last, value_type(first), distance_type(first));
+}
+
+template <class BidirectionalIterator, class T, class Distance>
+inline void inplace_merge_aux(BidirectionalIterator first, 
+BidirectionalIterator middle, BidirectionalIterator last, T*, Distance*)
+{
+    Distance len1 = 0;
+    distance(first, middle, len1);
+    Distance len2 = 0;
+    distance(middle, last, len2);
+
+    temporary_buffer<BidirectionalIterator, T> buf(first, last);
+    if (buf.begin() == 0) { //内存配置失败
+        __merge_without_buffer(first, middle, last, len1, len2);
+    } else { //有暂时缓存区的情况下进行
+        __merge_adaptive(first, middle, last, len1, len2, 
+        buf.begin(), Distance(buf.size()));
+    }
+}
+
+//辅助函数:有缓存区的情况下
+template <class BidirectionalIterator, class Distance, class Pointer>
+void __merge_adaptive(BidirectionalIterator first, BidirectionalIterator middle,
+BidirectionalIterator last, Distance len1, Distance len2, 
+Pointer buffer, Distance buffer_size)
+{
+    if (len1 < len2 && len1 <= buffer_size) {
+        Pointer end_buffer = copy(first, middle, buffer);
+        merge(buffer, end_buffer, middle, last, first);
+    } else if (len2 <= buffer_size) {
+        Pointer end_buffer = copy(middle, last, buffer);
+        __merge_backward(first, middle, buffer, end_buffer, last);
+    } else {
+        BidirectionalIterator first_cut = first;
+        BidirectionalIterator second_cut = middle;
+
+        Distance len11 = 0;
+        Distance len22 = 0;
+        if (len1 > len2) {
+            len11 = len1/2;
+            advance(first_cut, len11);
+            second_cut = lower_bound(middle, last, *first_cut);
+            distance(middle, second_cut, len22);
+        } else {
+            len22 = len2/2;
+            advance(second_cut, len22);
+            first_cut = upper_bound(first, middle, *second_cut);
+            distance(first, first_cut, len11);
+        }
+        BidirectionalIterator new_middle = __rotate_adaptive(
+            first_cut, middle, second_cut, len1 - len11, len22,
+            buffer, buffer_size);
+        //针对左段递归调用
+        __merge_adaptvie(first, first_cut, new_middle, len11, len22, buffer, buffer_size);
+        //针对右段递归调用
+        __merge_adaptvie(new_middle, second_cut, last, len1-len11, len2-len22, buffer, buffer_size);
+    }
+}
+
+template <class BidirectionalIterator1, class BidirectionalIterator2, class Distance>
+BidirectionalIterator1 __rotate_adaptive(BidirectionalIterator1 first,
+BidirectionalIterator1 middle, BidirectionalIterator last, Distance len1,
+Distance len2, BidirectionalIterator2 buffer, Distance buffer_size)
+{
+    BidirectionalIterator2 buffer_end;
+    if (len1 > len2 && len2 <= buffer_size) {
+        //缓存区足够安置序列二(较短)
+        buffer_end = copy(middle, last, buffer);
+        copy_backward(first, middle, last);
+        return copy(buffer, buffer_end, first);
+    } else if (len1 <= buffer_size) {
+        //缓存区足够安置序列一
+        buffer_end = copy(first, middle, buffer);
+        copy(middle, last, first);
+        return copy_backward(buffer, buffer_end, last);
+    } else {
+        //缓存区不足.改用rotate算法(不需要缓存区)
+        rotate(first, middle, last);
+        advance(first, len2);
+        return first;
+    }
+}
+
+//nth_element
+//重复排列[first,last)使迭代器nth所指的元素,与整个序列完整排序后,
+//同一位置的元素同值,此外并保证[nth,last)内任何一个元素不大于[first,nth)内元素
+
+//version 1: operator<
+template <class RandomAccessIterator, class T>
+void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
+RandomAccessIterator last)
+{
+    __nth_element(first, nth, last, value_type(first));
+}
+
+//辅助函数version 1
+template <class RandomAccessIterator, class T>
+void __nth_element(RandomAccessIterator first, RandomAccessIterator nth,
+RandomAccessIterator last, T*)
+{
+    while (last - first > 3) {
+        //采用media-of-tree partitioning
+        //返回一个迭代器,指向分割后的右段的第一参数
+        RandomAccessIterator cut = __unguarded_partition(
+            first, last, T(__media(*first, 
+                                   *(first+(last-first)/2),
+                                   *(last-1))));
+        if (cut <= nth)  //如果右段起点<=指定位置(nth落于右段)
+            first = cut; //再对右段实施分割(partitioning)
+        else             //否则(nth落于左段)
+            last = cut;  //对左段实施分割(partitioning)
+    }
+    __insertion_sort(first, last);
+}
+
+//==== merge sort ======
+/*
+SGI STL所采用的排序法是IntroSort,不过另一个很有名的算法Merge Sort,
+很轻易就可以利用STL算法inplace_merge实现出来.
+
+既然我们知道,将两个有序区间归并成一个有序区间,效果不错,那么我们利用
+"分而治之"的概念,以各个击破的方式来对一个区间进行排序.首先将区间对半分割
+左右两段各自排序,再利用inplace_merge重新组合为一个完整的有序序列.对半分
+割的操作可以递归进行,直到每一个小段的长度为0或1.
+
+复杂度为O(nlogn),虽然这个quick-sort是一样的,但因为MergeSort需要额外
+的内存,而且在内存之间移动(复制)数据也会耗费不少时间,所以MergeSort效率
+比不上QuickSort.实现简单,概念简单是MergeSort的两大优点.
+*/
+
+template <class BidirectionalIter>
+void mergesort(BidirectionalIter first, BidirectionalIter last)
+{
+    typename iterator_traits<BidirectionalIter>::difference_type n
+    = distance(first, last);
+    if (n == 0 || n == 1) 
+        return;
+    else {
+        BidirectionalIter mid = first + n/2;
+        mergesort(first, mid);
+        mergesort(mid, last);
+        inplace_merge(first, mid, last);
+    }
+}
 
 #endif // SGI_STL_ALGO_H
